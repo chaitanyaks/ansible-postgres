@@ -1,0 +1,92 @@
+postgresql_version: 9.6
+postgresql_encoding: "UTF-8"
+postgresql_data_checksums: false
+postgresql_admin_user: "postgres"
+postgresql_service_user: "{{ postgresql_admin_user }}"
+postgresql_service_group: "{{ postgresql_admin_user }}"
+postgresql_service_enabled: true
+
+postgresql_database_owner: "{{ postgresql_admin_user }}"
+postgresql_cluster_name: "main"
+postgresql_cluster_reset: false
+
+postgresql_locale_parts:
+  - "en_US" # Locale
+  - "UTF-8" # Encoding
+postgresql_locale: "{{ postgresql_locale_parts | join('.') }}"
+postgresql_ctype_parts:
+  - "en_US" # Locale
+  - "UTF-8" # Encoding
+postgresql_ctype: "{{ postgresql_ctype_parts | join('.') }}"
+
+postgresql_default_auth_method: "trust"
+postgresql_service_user: "{{ postgresql_admin_user }}"
+postgresql_database_owner: "{{ postgresql_admin_user }}"
+
+# postgresql.conf
+
+#------------------------------------------------------------------------------
+# FILE LOCATIONS
+#------------------------------------------------------------------------------
+
+# Location of postgres configuration files here
+
+postgresql_conf_directory: "/etc/postgresql/{{ postgresql_version }}/{{ postgresql_cluster_name }}"
+
+# HBA (Host Based Authentication) file
+postgresql_hba_file: "{{ postgresql_conf_directory }}/pg_hba.conf"
+# Ident configuration file
+postgresql_ident_file: "{{ postgresql_conf_directory }}/pg_ident.conf"
+postgresql_varlib_directory_name: "postgresql"
+postgresql_data_directory: "/var/lib/{{ postgresql_varlib_directory_name }}/{{ postgresql_version }}/{{ postgresql_cluster_name }}"
+postgresql_pid_directory: "/var/run/postgresql"
+
+#------------------------------------------------------------------------------
+# CONNECTIONS AND AUTHENTICATION
+#------------------------------------------------------------------------------
+
+postgresql_listen_addresses:
+  - "localhost"
+postgresql_port: 5432
+
+postgresql_max_connections: 100
+
+
+#------------------------------------------------------------------------------
+# PGTUNE
+#------------------------------------------------------------------------------
+# Should we run pgtune and accept the changes it proposes?
+postgresql_pgtune: no
+# Total system memory in bytes, will attempt to detect if set to "no"
+postgresql_pgtune_memory: no
+# Database type, valid options are DW, OLTP, Web, Mixed, Desktop
+postgresql_pgtune_type: "Mixed"
+# Maximum number of expected connections, if "no", default based on db type
+postgresql_pgtune_connections: no
+
+# Install repo, or rely on existing configuration (Satellite, Artifactory, etc.)
+postgresql_install_repository: true
+
+
+postgresql_env:
+  LC_ALL: "{{ postgresql_locale }}"
+  LC_LCTYPE: "{{ postgresql_locale }}"
+
+# Yum settings
+postgresql_pgdg_dists:
+  RedHat: redhat
+postgresql_pgdg_releases:
+  redhat: {
+      9.6: 3
+}
+
+postgresql_version_terse: "{{ postgresql_version | replace('.', '') }}"
+
+# YUM repository locations
+postgresql_yum_repository_url: "http://yum.postgresql.org"
+postgresql_pgdg_repository_url: "https://download.postgresql.org/pub/repos/yum/"
+
+# YUM (RedHat, CentOS, etc.) baseurl/gpgkey
+postgresql_yum_repository_baseurl: "{{ postgresql_yum_repository_url }}/{{ postgresql_version }}/{{ ansible_os_family | lower }}/rhel-{{ ansible_distribution_major_version }}-{{ ansible_architecture }}"
+postgresql_yum_repository_gpgkey: "{{ postgresql_pgdg_repository_url }}/RPM-GPG-KEY-PGDG-{{ postgresql_version_terse }}"
+

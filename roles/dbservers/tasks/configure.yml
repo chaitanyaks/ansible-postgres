@@ -1,0 +1,76 @@
+- name: PostgreSQL | Drop the data directory | RedHat
+  file:
+    path: "{{ postgresql_data_directory }}"
+    state: absent
+  register: pgdata_dir_remove
+  when: ansible_os_family == "RedHat" and postgresql_cluster_reset
+
+- name: PostgreSQL | Make sure the postgres data directory exists
+  file:
+    path: "{{postgresql_data_directory}}"
+    owner: "{{ postgresql_service_user }}"
+    group: "{{ postgresql_service_group }}"
+    state: directory
+    mode: 0700
+  register: pgdata_dir_exist
+
+- name: PostgreSQL | Check whether the postgres data directory is initialized
+  stat:
+    path: "{{ postgresql_data_directory }}/PG_VERSION"
+  when: ansible_os_family == "RedHat" and not postgresql_cluster_reset
+  register: pgdata_dir_initialized
+
+- name: PostgreSQL | Initialize the database | RedHat
+  command: >
+    {{ postgresql_bin_directory }}/initdb -D {{ postgresql_data_directory }}
+  become: yes
+  become_user: "{{ postgresql_service_user }}"
+  when: ansible_os_family == "RedHat" and
+        (postgresql_cluster_reset or
+         pgdata_dir_exist.changed or
+         not pgdata_dir_initialized.stat.exists)
+
+- name: PostgreSQL | Ensure configuration directory exists
+  file:
+    path: "{{ postgresql_conf_directory }}"
+    owner: "{{ postgresql_service_user }}"
+    group: "{{ postgresql_service_group }}"
+    mode: 0700
+    state: directory
+
+####### cofniguration changes ########
+
+###### Enabling connections to the postgres server
+
+- name: Listen on '*'
+  lineinfile: dest=/var/lib/pgsql/9.6/data/postgresql.conf
+             line="listen_addresses = '*'"
+             state=present
+- name: Removing the listenaddress to localhost
+  lineinfile: dest=/var/lib/pgsql/9.6/data/postgresql.conf
+             regexp="^listen_addresses = 'localhost'"
+             state=absent
+
+- name: enabling local password based connections in pg_hba.conf file
+  lineinfile: dest=/var/lib/pgsql/9.6/data/pg_hba.conf
+             line="local   all             all           md5"
+             state=present
+- name: Removing the old default configuration in pg_hba.conf file
+  lineinfile: dest=/var/lib/pgsql/9.6/data/pg_hba.conf
+             regexp="^local   all             all                                     peer"
+             state=absent
+
+- name: Removing the old default configuration in pg_hba.conf file
+  lineinfile: dest=/var/lib/pgsql/9.6/data/pg_hba.conf
+             regexp="^host    all             all             127.0.0.1/32            peer"
+             state=absent
+- name: enabling remote password based connections in pg_hba.conf file
+  lineinfile: dest=/var/lib/pgsql/9.6/data/pg_hba.conf
+             line="host    all             all             0.0.0.0/0           md5"
+             state=present
+  notify: restart postgresql
+
+- name: PostgreSQL | Reload all conf files
+  service:
+    name: "{{ postgresql_service_name }}"
+    state: reloaded

@@ -1,0 +1,15 @@
+
+
+- name: include install_yum.yml
+  import_tasks: install_yum.yml
+  when: ansible_pkg_mgr == "yum" and ansible_distribution == "RedHat"
+
+- name: include configure.yml
+  import_tasks: configure.yml
+
+- name: include database.yml
+  import_tasks: database.yml
+
+- name: include users.yml
+  import_tasks: users.yml
+ 
