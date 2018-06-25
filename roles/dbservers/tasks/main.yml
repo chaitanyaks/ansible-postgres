@@ -1,0 +1,19 @@
+
+
+- name: include install_yum.yml
+  import_tasks: install_yum.yml
+  when: ansible_pkg_mgr == "yum" and ansible_distribution == "RedHat"
+  tags: [postgresql, postgresql-install]
+
+- name: include configure.yml
+  import_tasks: configure.yml
+  tags: [postgresql, postgresql-configure]
+
+- name: include database.yml
+  import_tasks: database.yml
+  tags: [postgresql, postgresql-databases]
+
+- name: include users.yml
+  import_tasks: users.yml
+  tags: [postgresql, postgresql-users]
+ 

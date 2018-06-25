@@ -1,0 +1,17 @@
+- name: PostgreSQL | Ensure PostgreSQL is running
+  service:
+    name: "{{ postgresql_service_name }}"
+    state: restarted
+
+- name: PostgreSQL | Make sure the PostgreSQL databases are present
+  postgresql_db:
+    name: "{{ db_name }}"
+    encoding: 'UTF-8'
+    lc_collate: 'en_US.UTF-8'
+    lc_ctype: 'en_US.UTF-8'
+    template: 'template0'
+    state: present
+    login_user: "{{ postgresql_admin_user }}"
+  become: yes
+  become_user: "{{ postgresql_admin_user }}"
+
