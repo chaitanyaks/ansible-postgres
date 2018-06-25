@@ -49,6 +49,9 @@
   register: pglog_dir_exist
   when: postgresql_log_directory != "pg_log"
 
+
+###### Configuration changes  #######
+
 - name: PostgreSQL | Update configuration - pt. 1 (pg_hba.conf)
   template:
     src: pg_hba.conf.j2
@@ -58,23 +61,18 @@
     mode: 0640
   register: postgresql_configuration_pt1
 
-####### cofniguration changes ########
+- name: PostgreSQL | Update configuration - pt. 2 (postgresql.conf)
+  template:
+    src: "postgresql.conf-{{ postgresql_version }}.j2"
+    dest: "{{postgresql_conf_directory}}/postgresql.conf"
+    owner: "{{ postgresql_service_user }}"
+    group: "{{ postgresql_service_group }}"
+    mode: 0640
+  register: postgresql_configuration_pt2
 
-###### Enabling connections to the postgres server
 
-- name: Listen on '*'
-  lineinfile: dest=/var/lib/pgsql/9.6/data/postgresql.conf
-             line="listen_addresses = '*'"
-             state=present
-  notify: restart postgresql
-
-- name: Removing the listenaddress to localhost
-  lineinfile: dest=/var/lib/pgsql/9.6/data/postgresql.conf
-             regexp="^listen_addresses = 'localhost'"
-             state=absent
-  notify: restart postgresql
-
-#- name: PostgreSQL | Reload all conf files
-#  service:
-#    name: "{{ postgresql_service_name }}"
-#    state: reloaded
+- name: PostgreSQL | Reload all conf files
+  service:
+    name: "{{ postgresql_service_name }}"
+    state: reloaded
+  when: postgresql_configuration_pt1.changed or postgresql_configuration_pt2.changed

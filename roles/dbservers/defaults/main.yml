@@ -64,8 +64,7 @@ postgresql_pid_directory: "/var/run/postgresql"
 # CONNECTIONS AND AUTHENTICATION
 #------------------------------------------------------------------------------
 
-postgresql_listen_addresses:
-  - "localhost"
+postgresql_listen_addresses: '*'
 postgresql_port: 5432
 
 postgresql_max_connections: 100
