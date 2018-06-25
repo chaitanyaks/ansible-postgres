@@ -14,6 +14,7 @@
     mode: 0700
   register: pgdata_dir_exist
 
+
 - name: PostgreSQL | Check whether the postgres data directory is initialized
   stat:
     path: "{{ postgresql_data_directory }}/PG_VERSION"
@@ -38,6 +39,25 @@
     mode: 0700
     state: directory
 
+- name: PostgreSQL | Make sure the postgres log directory exists
+  file:
+    path: "{{ postgresql_log_directory }}"
+    owner: "{{ postgresql_service_user }}"
+    group: "{{ postgresql_service_group }}"
+    state: directory
+    mode: 0700
+  register: pglog_dir_exist
+  when: postgresql_log_directory != "pg_log"
+
+- name: PostgreSQL | Update configuration - pt. 1 (pg_hba.conf)
+  template:
+    src: pg_hba.conf.j2
+    dest: "{{postgresql_conf_directory}}/pg_hba.conf"
+    owner: "{{ postgresql_service_user }}"
+    group: "{{ postgresql_service_group }}"
+    mode: 0640
+  register: postgresql_configuration_pt1
+
 ####### cofniguration changes ########
 
 ###### Enabling connections to the postgres server
@@ -46,31 +66,15 @@
   lineinfile: dest=/var/lib/pgsql/9.6/data/postgresql.conf
              line="listen_addresses = '*'"
              state=present
+  notify: restart postgresql
+
 - name: Removing the listenaddress to localhost
   lineinfile: dest=/var/lib/pgsql/9.6/data/postgresql.conf
              regexp="^listen_addresses = 'localhost'"
              state=absent
-
-- name: enabling local password based connections in pg_hba.conf file
-  lineinfile: dest=/var/lib/pgsql/9.6/data/pg_hba.conf
-             line="local   all             all           md5"
-             state=present
-- name: Removing the old default configuration in pg_hba.conf file
-  lineinfile: dest=/var/lib/pgsql/9.6/data/pg_hba.conf
-             regexp="^local   all             all                                     peer"
-             state=absent
-
-- name: Removing the old default configuration in pg_hba.conf file
-  lineinfile: dest=/var/lib/pgsql/9.6/data/pg_hba.conf
-             regexp="^host    all             all             127.0.0.1/32            peer"
-             state=absent
-- name: enabling remote password based connections in pg_hba.conf file
-  lineinfile: dest=/var/lib/pgsql/9.6/data/pg_hba.conf
-             line="host    all             all             0.0.0.0/0           md5"
-             state=present
   notify: restart postgresql
 
-- name: PostgreSQL | Reload all conf files
-  service:
-    name: "{{ postgresql_service_name }}"
-    state: reloaded
+#- name: PostgreSQL | Reload all conf files
+#  service:
+#    name: "{{ postgresql_service_name }}"
+#    state: reloaded

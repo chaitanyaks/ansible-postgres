@@ -1,7 +1,7 @@
 - name: PostgreSQL | Ensure PostgreSQL is running
   service:
     name: "{{ postgresql_service_name }}"
-    state: started
+    state: restarted
 
 - name: PostgreSQL | Make sure the PostgreSQL databases are present
   postgresql_db:
