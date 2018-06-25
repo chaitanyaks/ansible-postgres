@@ -1,9 +1,0 @@
----
-
-- name: Create a PostgreSQL DB server
-  hosts: dbservers
-  become: yes
-  remote_user: ansible-user
-
-  roles:
-  - dbservers
